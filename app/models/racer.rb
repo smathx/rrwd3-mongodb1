@@ -84,5 +84,4 @@ class Racer
   def updated_at
     nil
   end
-
 end

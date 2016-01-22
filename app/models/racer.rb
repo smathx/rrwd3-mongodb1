@@ -11,6 +11,10 @@ class Racer
   end
   
   def self.all(prototype = {}, sort = {:number => 1}, skip = 0, limit = nil)
+    
+    prototype = prototype.slice(:number, :first_name, :last_name, 
+                                :gender, :group, :secs) if !prototype.nil?
+
     result = collection.find(prototype)
                        .sort(sort)
                        .skip(skip)
@@ -84,4 +88,27 @@ class Racer
   def updated_at
     nil
   end
+  
+  # Paginate
+  
+  def self.paginate(params)
+    Rails.logger.debug("paginate(#{params})")
+    
+    page = (params[:page] ||= 1).to_i
+    limit = (params[:per_page] ||= 30).to_i
+    offset = (page - 1) * limit
+    sort = { number: 1 } #params[:sort] ||= {}
+
+    racers = []
+    all(params, sort, offset, limit).each do |doc|
+      racers << Racer.new(doc)
+    end
+
+    total = all(params, sort, 0, 1).count
+    
+    WillPaginate::Collection.create(page, limit, total) do |pager|
+      pager.replace(racers)
+    end    
+  end
+
 end
